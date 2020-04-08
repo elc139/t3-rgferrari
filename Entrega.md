@@ -1,8 +1,8 @@
 # Scheduling com OpenMP
 
-### Programação Paralela - elc139
-### Nome: René Gargano Ferrari
-### Matrícula: 201812031
+#### Cadeira: Programação Paralela - elc139
+#### Nome: René Gargano Ferrari
+#### Matrícula: 201812031
 
 ## Programa desenvolvido
 
