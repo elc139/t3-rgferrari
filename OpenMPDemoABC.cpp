@@ -3,8 +3,6 @@
 #include <string>
 #include <omp.h>
 
-omp_lock_t lock;
-
 class SharedArray
 {
 private:
@@ -23,17 +21,22 @@ public:
     {
         delete[] array;
     }
-    void addChar(char c, int i)
+    void addChar(char c)
     {
-        if (usemutex)
-            omp_set_lock(&lock);
-
-        array[i] = c;
-        spendSomeTime();
-        //index++;
-
-        if (usemutex)
-            omp_unset_lock(&lock);
+        if (usemutex){
+            #pragma omp ordered
+            {
+                array[index] = c;
+                spendSomeTime();
+                index++;
+            }
+        }
+        else{
+            array[index] = c;
+            spendSomeTime();
+            index++;
+        }
+            
     }
     int countOccurrences(char c)
     {
@@ -73,15 +76,11 @@ public:
     {
         omp_set_num_threads(nThreads);
 
-        omp_init_lock(&lock);
-
-        #pragma omp parallel for schedule(runtime)
+        #pragma omp parallel for schedule(runtime) ordered
         for (int i = 0; i < nTimes * nThreads; i++)
         {
-            array->addChar('A' + omp_get_thread_num(), i);
+            array->addChar('A' + omp_get_thread_num());
         }
-
-        omp_destroy_lock(&lock);
     }
     void printStats()
     {
@@ -149,27 +148,15 @@ int main()
     m8.fillArrayConcurrently();
     m8.printStats();
 
-    std::cout << "Case 9: static (with no chunk specification) with no mutex" << std::endl;
+    std::cout << "Case 9: static (with no chunk specification) (with no mutex)" << std::endl;
     ArrayFiller m9(false);
     omp_set_schedule(omp_sched_static, 0);
     m9.fillArrayConcurrently();
     m9.printStats();
 
-    std::cout << "Case 10: static (with chunk specification) with no mutex" << std::endl;
+    std::cout << "Case 10: static (with chunk specification) (with no mutex)" << std::endl;
     ArrayFiller m10(false);
     omp_set_schedule(omp_sched_static, 8);
     m10.fillArrayConcurrently();
     m10.printStats();
-    
-    std::cout << "Case 11: dynamic (with no chunk specification) with no mutex" << std::endl;
-    ArrayFiller m11(false);
-    omp_set_schedule(omp_sched_dynamic, 0);
-    m11.fillArrayConcurrently();
-    m11.printStats();
-
-    std::cout << "Case 12: dynamic (with chunk specification) with no mutex" << std::endl;
-    ArrayFiller m12(false);
-    omp_set_schedule(omp_sched_dynamic, 8);
-    m12.fillArrayConcurrently();
-    m12.printStats();
 }
